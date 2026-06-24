@@ -7,7 +7,8 @@ from core.permissions import IsAdmin
 from .models import CustomUser
 from .serializers import UserAdminSerializer, RegisterSerializer
 from apps.attendance.models import AttendanceRecord
-
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 class UserListView(generics.ListAPIView):
     permission_classes = [IsAdmin]
@@ -24,6 +25,13 @@ class UserCreateView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
 
     def create(self, request, *args, **kwargs):
+        # Validar contraseña primero
+        try:
+            validate_password(request.data.get('password'))
+        except ValidationError as e:
+            return Response({'errors': e.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Luego continuar con el flujo normal
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()

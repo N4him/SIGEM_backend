@@ -64,14 +64,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Base de datos
+# ── Base de datos ─────────────────────────────────────────────────────────────
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-# Para producción con PostgreSQL, reemplazar con:
+# Para producción con PostgreSQL:
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
@@ -103,7 +103,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Django REST Framework
+# ── Django REST Framework ─────────────────────────────────────────────────────
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -117,26 +117,108 @@ REST_FRAMEWORK = {
     ),
 }
 
-# SimpleJWT
+# ── SimpleJWT ─────────────────────────────────────────────────────────────────
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),  # ← cambia esto
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# CORS
+# ── CORS ──────────────────────────────────────────────────────────────────────
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
     default='http://localhost:3000'
 ).split(',')
-CORS_ALLOW_ALL_ORIGINS = DEBUG
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
 
-# Google Drive
+# ── Google Drive ──────────────────────────────────────────────────────────────
 GOOGLE_APPLICATION_CREDENTIALS = config(
     'GOOGLE_APPLICATION_CREDENTIALS',
     default='credentials/drive_service_account.json'
 )
 DRIVE_ROOT_FOLDER_ID = config('DRIVE_ROOT_FOLDER_ID', default='')
+
+# ── Logging estructurado ──────────────────────────────────────────────────────
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'console_simple': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+            'filters': ['require_debug_true'],
+        },
+    },
+
+    'loggers': {
+        # Django general — solo warnings en producción
+        'django': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        # Requests HTTP — solo en desarrollo
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR' if not DEBUG else 'INFO',
+            'propagate': False,
+        },
+        # Queries SQL — solo en desarrollo si se necesita depurar
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        # App de usuarios
+        'apps.users': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # App de asistencia — incluye Drive
+        'apps.attendance': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # App de salas
+        'apps.rooms': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+}
