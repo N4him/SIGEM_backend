@@ -222,3 +222,9 @@ LOGGING = {
         'level': 'WARNING',
     },
 }
+
+# ── CSRF ──────────────────────────────────────────────────────────────────────
+CSRF_TRUSTED_ORIGINS = [
+    'http://eiscapp.univalle.edu.co',
+    'https://eiscapp.univalle.edu.co',
+]
