@@ -228,3 +228,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://eiscapp.univalle.edu.co',
     'https://eiscapp.univalle.edu.co',
 ]
+
+# ── Proxy ─────────────────────────────────────────────────────────────────────
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'http')
