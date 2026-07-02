@@ -106,7 +106,6 @@ class ReportsView(APIView):
                 check_in__date__lte=to_date
             )
 
-        # Filtros adicionales
         if room_id:
             records = records.filter(room_id=room_id)
         if user_id:
@@ -121,9 +120,9 @@ class ReportsView(APIView):
                 'monitor': r.user.get_full_name(),
                 'email': r.user.email,
                 'sala': r.room.name,
-                'fecha': r.check_in.date().isoformat(),
-                'entrada': r.check_in.strftime('%H:%M'),
-                'salida': r.check_out.strftime('%H:%M') if r.check_out else '',
+                'fecha': timezone.localtime(r.check_in).date().isoformat(),
+                'entrada': timezone.localtime(r.check_in).strftime('%H:%M'),
+                'salida': timezone.localtime(r.check_out).strftime('%H:%M') if r.check_out else '',
                 'horas': r.hours_worked or 0,
                 'foto': r.photo_url,
             }
@@ -144,14 +143,15 @@ class ReportsView(APIView):
         response['Content-Disposition'] = 'attachment; filename="reporte_asistencia.csv"'
         writer = csv.writer(response)
         writer.writerow(['Monitor', 'Email', 'Sala', 'Fecha', 'Entrada', 'Salida', 'Horas'])
+        from django.utils import timezone
         for r in records:
             writer.writerow([
                 r.user.get_full_name(),
                 r.user.email,
                 r.room.name,
-                r.check_in.date().isoformat(),
-                r.check_in.strftime('%H:%M'),
-                r.check_out.strftime('%H:%M') if r.check_out else '',
+                timezone.localtime(r.check_in).date().isoformat(),
+                timezone.localtime(r.check_in).strftime('%H:%M'),
+                timezone.localtime(r.check_out).strftime('%H:%M') if r.check_out else '',
                 r.hours_worked or 0,
             ])
         return response
